@@ -151,7 +151,7 @@ async def get_activity(robot_id):
                 "timestamp":   a.timestamp.isoformat() if a.timestamp else None,
                 "unitStatus":  status_value,
                 "catWeight":   weight,
-                "catDetected": status_value in ("CD", "RDY", "CST", "CSI", "CSF"),
+                "catDetected": status_value in ("CD", "RDY", "CST", "CSI", "CSF", "BR"),
                 "duration":    None,
             })
         return result
