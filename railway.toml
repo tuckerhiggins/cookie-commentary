@@ -1,6 +1,7 @@
 [build]
 builder = "nixpacks"
+buildCommand = "npm install && pip install -r requirements.txt"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "node index.js"
 restartPolicyType = "always"
