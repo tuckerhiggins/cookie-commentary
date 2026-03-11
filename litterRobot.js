@@ -1,35 +1,24 @@
 // litterRobot.js
-// Delegates to litter_robot.py (pylitterbot) via child_process
 const { execFile } = require('child_process');
 const path = require('path');
-
 const SCRIPT = path.join(__dirname, 'litter_robot.py');
 
-function runPython(args) {
+function py(...args) {
   return new Promise((resolve, reject) => {
-    execFile('python3', [SCRIPT, ...args], {
-      env: process.env,
-      timeout: 30000,
-    }, (err, stdout, stderr) => {
-      if (err) {
-        reject(new Error(stderr || err.message));
-        return;
-      }
-      try {
-        resolve(JSON.parse(stdout));
-      } catch (e) {
-        reject(new Error(`Failed to parse Python output: ${stdout}`));
-      }
-    });
+    execFile('python3', [SCRIPT, ...args], { env: process.env, timeout: 30000 },
+      (err, stdout, stderr) => {
+        if (err) return reject(new Error(stderr || err.message));
+        try { resolve(JSON.parse(stdout)); }
+        catch (e) { reject(new Error(`Bad Python output: ${stdout}`)); }
+      });
   });
 }
 
-async function getRobots() {
-  return runPython(['robots']);
-}
+const getRobots          = ()       => py('robots');
+const getRecentActivity  = (id)     => py('activity', id);
+const recordVisit        = (a)      => py('record_visit', JSON.stringify(a));
+const recordSabotage     = (a)      => py('record_sabotage', JSON.stringify(a));
+const getVisitContext    = (a)      => py('context_visit', JSON.stringify(a));
+const getSabotageContext = ()       => py('context_sabotage');
 
-async function getRecentActivity(robotId) {
-  return runPython(['activity', robotId]);
-}
-
-module.exports = { getRobots, getRecentActivity };
+module.exports = { getRobots, getRecentActivity, recordVisit, recordSabotage, getVisitContext, getSabotageContext };
