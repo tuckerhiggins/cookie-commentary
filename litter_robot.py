@@ -139,16 +139,20 @@ async def get_activity(robot_id):
         await account.connect(username=EMAIL, password=PASSWORD, load_robots=True)
         robot = next((r for r in account.robots if str(r.id) == robot_id), None)
         if not robot: return []
-        activity = await robot.get_activity()
+        history = await robot.get_activity_history(limit=50)
+        # pet_weight comes from current robot state; LR4 API doesn't provide per-activity weight
+        weight = float(robot.pet_weight) if robot.pet_weight else None
         result = []
-        for a in (activity or []):
+        for a in history:
+            action = a.action
+            status_value = action.value if hasattr(action, "value") else str(action)
             result.append({
-                "activityId":  str(a.timestamp.timestamp()) if a.timestamp else None,
+                "activityId":  a.timestamp.isoformat() if a.timestamp else None,
                 "timestamp":   a.timestamp.isoformat() if a.timestamp else None,
-                "unitStatus":  str(a.status.value) if a.status else None,
-                "catWeight":   float(a.cat_weight) if a.cat_weight else None,
-                "catDetected": getattr(a, "cat_detected", False),
-                "duration":    int(a.duration.total_seconds()) if getattr(a, "duration", None) else None,
+                "unitStatus":  status_value,
+                "catWeight":   weight,
+                "catDetected": status_value in ("CD", "RDY", "CST", "CSI", "CSF"),
+                "duration":    None,
             })
         return result
     finally:
