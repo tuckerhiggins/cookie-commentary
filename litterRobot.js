@@ -1,9 +1,13 @@
-// src/litterRobot.js
-// Litter-Robot 4 uses a GraphQL API via their cloud service
+// litterRobot.js
+// Uses Whisker's current GraphQL API for LR4 (as of 2024/2025)
+// Auth: Cognito via the whisker.iothings.site user pool
 const axios = require('axios');
 
-const LR_API_URL = 'https://api.litter-robot.com';
-const LR_AUTH_URL = 'https://cognito-idp.us-east-1.amazonaws.com/';
+// Current Whisker/LR4 Cognito config (reverse-engineered from app)
+const COGNITO_REGION = 'us-east-1';
+const COGNITO_CLIENT_ID = '20k6j0thrjr5dpth0j8uovf62v'; // current Whisker app client ID
+const COGNITO_URL = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/`;
+const GRAPHQL_URL = 'https://lr4.iothings.site/graphql';
 
 let accessToken = null;
 let tokenExpiry = null;
@@ -12,40 +16,29 @@ async function authenticate() {
   const email = process.env.LITTER_ROBOT_EMAIL;
   const password = process.env.LITTER_ROBOT_PASSWORD;
 
-  if (!email || !password) {
-    throw new Error('Missing LITTER_ROBOT_EMAIL or LITTER_ROBOT_PASSWORD env vars');
-  }
-
-  try {
-    // LR4 uses AWS Cognito for auth
-    const response = await axios.post(
-      LR_AUTH_URL,
-      {
-        AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: '394fm2rts7a1i2f2s9uthb5f60', // LR4 Cognito Client ID (public)
-        AuthParameters: {
-          USERNAME: email,
-          PASSWORD: password,
-        },
+  const response = await axios.post(
+    COGNITO_URL,
+    {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: COGNITO_CLIENT_ID,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
       },
-      {
-        headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
-        },
-      }
-    );
+    },
+    {
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+      },
+    }
+  );
 
-    accessToken = response.data.AuthenticationResult.AccessToken;
-    const expiresIn = response.data.AuthenticationResult.ExpiresIn || 3600;
-    tokenExpiry = Date.now() + (expiresIn - 60) * 1000; // refresh 60s early
-
-    console.log('✅ Authenticated with Litter-Robot API');
-    return accessToken;
-  } catch (err) {
-    console.error('❌ Auth failed:', err.response?.data || err.message);
-    throw err;
-  }
+  accessToken = response.data.AuthenticationResult.AccessToken;
+  const expiresIn = response.data.AuthenticationResult.ExpiresIn || 3600;
+  tokenExpiry = Date.now() + (expiresIn - 60) * 1000;
+  console.log('✅ Authenticated with Whisker API');
+  return accessToken;
 }
 
 async function getToken() {
@@ -58,32 +51,80 @@ async function getToken() {
 async function getRobots() {
   const token = await getToken();
 
-  const response = await axios.get(`${LR_API_URL}/users/me/robots`, {
-    headers: {
-      Authorization: token,
-    },
-  });
+  const query = `
+    query GetUserRobots {
+      getLitterRobot4s {
+        unitId
+        name
+        serial
+        userId
+        unitStatus
+      }
+    }
+  `;
 
-  return response.data;
+  const response = await axios.post(
+    GRAPHQL_URL,
+    { query },
+    {
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  const robots = response.data?.data?.getLitterRobot4s || [];
+  return robots.map(r => ({
+    litterRobotId: r.unitId,
+    name: r.name,
+    serial: r.serial,
+    unitStatus: r.unitStatus,
+  }));
 }
 
 async function getRecentActivity(robotId) {
   const token = await getToken();
 
-  // Fetch activity logs for the robot
-  const response = await axios.get(
-    `${LR_API_URL}/users/me/robots/${robotId}/activity`,
+  const query = `
+    query GetActivity($unitId: String!, $limit: Int) {
+      getLitterRobot4Activity(unitId: $unitId, limit: $limit) {
+        activityId: id
+        unitId
+        unitStatus
+        catWeight
+        catDetected
+        duration: cleanCycleWaitTimeMinutes
+        timestamp
+      }
+    }
+  `;
+
+  const response = await axios.post(
+    GRAPHQL_URL,
+    {
+      query,
+      variables: { unitId: robotId, limit: 10 },
+    },
     {
       headers: {
         Authorization: token,
-      },
-      params: {
-        limit: 10,
+        'Content-Type': 'application/json',
       },
     }
   );
 
-  return response.data;
+  const raw = response.data?.data?.getLitterRobot4Activity || [];
+
+  // Normalize field names to what our app expects
+  return raw.map(a => ({
+    activityId: a.activityId || a.id,
+    timestamp:  a.timestamp,
+    unitStatus: a.unitStatus,
+    catWeight:  a.catWeight  ?? null,
+    catDetected: a.catDetected ?? false,
+    duration:   a.duration   ?? null,
+  }));
 }
 
 module.exports = { getRobots, getRecentActivity, authenticate };
