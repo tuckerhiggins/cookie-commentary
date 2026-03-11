@@ -57,8 +57,36 @@ async function checkForNewActivity() {
   }
 }
 
+async function runTestMode() {
+  const mode = process.env.TEST_MODE; // 'visit' or 'sabotage'
+  console.log(`🧪 TEST MODE: ${mode}`);
+  const fakeActivity = {
+    activityId: `test-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    unitStatus: mode === 'sabotage' ? 'CSI' : 'RDY',
+    catWeight: 15.03,
+    catDetected: true,
+    duration: null,
+  };
+  if (mode === 'sabotage') {
+    const commentary = await generateSabotageCommentary();
+    console.log(`💬 ${commentary}`);
+    await sendText(`😈 Cookie Incident Report:\n\n${commentary}`);
+  } else {
+    const { getVisitContext } = require('./litterRobot');
+    const commentary = await generateCommentary(fakeActivity);
+    console.log(`💬 ${commentary}`);
+    await sendText(`🐱 Cookie Update:\n\n${commentary}`);
+  }
+  console.log('🧪 Test complete.');
+}
+
 async function main() {
   console.log('🚀 Cookie Commentary Service starting...');
+  if (process.env.TEST_MODE) {
+    await runTestMode();
+    return;
+  }
   await checkForNewActivity();
   cron.schedule('*/3 * * * *', checkForNewActivity);
 }
