@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
-"""
-litter_robot.py
-Called by index.js via child_process. All DB operations live here too.
-Usage:
-  python3 litter_robot.py robots
-  python3 litter_robot.py activity <robotId>
-  python3 litter_robot.py record_visit <json>
-  python3 litter_robot.py record_sabotage <json>
-  python3 litter_robot.py context_visit
-  python3 litter_robot.py context_sabotage
-"""
-
 import asyncio, json, os, sqlite3, sys
 from datetime import datetime, timezone
-from pathlib import Path
 
-# ── DB setup ──────────────────────────────────────────────────────────────────
+DB_PATH = os.environ.get("DB_PATH", "/data/cookie.db")
 
-DB_PATH = os.environ.get("DB_PATH", "./cookie.db")
+# Credentials — passed as env vars, with CLI arg fallback for debugging
+EMAIL    = os.environ.get("LITTER_ROBOT_EMAIL", "")
+PASSWORD = os.environ.get("LITTER_ROBOT_PASSWORD", "")
+
+# Debug: print what we received to stderr (won't interfere with JSON stdout)
+print(f"DEBUG email='{EMAIL}' pwd_len={len(PASSWORD)}", file=sys.stderr)
 
 def get_db():
     db = sqlite3.connect(DB_PATH)
@@ -25,19 +17,19 @@ def get_db():
     db.execute("PRAGMA journal_mode=WAL")
     db.execute("""
         CREATE TABLE IF NOT EXISTS visits (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             activity_id TEXT UNIQUE NOT NULL,
-            timestamp   TEXT NOT NULL,
-            duration_s  INTEGER,
-            weight_lbs  REAL,
+            timestamp TEXT NOT NULL,
+            duration_s INTEGER,
+            weight_lbs REAL,
             unit_status TEXT
         )""")
     db.execute("CREATE INDEX IF NOT EXISTS idx_v_ts ON visits(timestamp)")
     db.execute("""
         CREATE TABLE IF NOT EXISTS sabotages (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             activity_id TEXT UNIQUE NOT NULL,
-            timestamp   TEXT NOT NULL
+            timestamp TEXT NOT NULL
         )""")
     db.execute("CREATE INDEX IF NOT EXISTS idx_s_ts ON sabotages(timestamp)")
     db.commit()
@@ -45,8 +37,6 @@ def get_db():
 
 def today():
     return datetime.now().strftime("%Y-%m-%d")
-
-# ── DB commands ───────────────────────────────────────────────────────────────
 
 def record_visit(data):
     db = get_db()
@@ -70,15 +60,12 @@ def record_sabotage(data):
 def context_visit(data):
     db = get_db()
     t = today()
-
     today_visits = db.execute(
         "SELECT * FROM visits WHERE date(timestamp)=? ORDER BY timestamp", (t,)).fetchall()
     visit_count = len(today_visits)
-
     stats = db.execute("""
         SELECT AVG(weight_lbs) avg, MIN(weight_lbs) mn, MAX(weight_lbs) mx
         FROM visits WHERE weight_lbs IS NOT NULL""").fetchone()
-
     recent_avg = db.execute("""
         SELECT AVG(weight_lbs) avg FROM visits
         WHERE weight_lbs IS NOT NULL AND timestamp >= datetime('now','-30 days')""").fetchone()
@@ -86,10 +73,8 @@ def context_visit(data):
         SELECT AVG(weight_lbs) avg FROM visits
         WHERE weight_lbs IS NOT NULL
           AND timestamp >= datetime('now','-60 days')
-          AND timestamp <  datetime('now','-30 days')""").fetchone()
-
+          AND timestamp < datetime('now','-30 days')""").fetchone()
     total_visits = db.execute("SELECT COUNT(*) cnt FROM visits").fetchone()["cnt"]
-
     sab_rate_visits = db.execute(
         "SELECT COUNT(*) cnt FROM visits WHERE timestamp >= datetime('now','-30 days')").fetchone()["cnt"]
     sab_rate_sabs = db.execute(
@@ -115,7 +100,6 @@ def context_visit(data):
         lines.append(f"🎉 MILESTONE: Visit #{total_visits}!")
     if sab_rate_visits > 0:
         lines.append(f"Sabotage rate this month: {round(sab_rate_sabs/sab_rate_visits*100)}% of cycles disrupted.")
-
     return {"context": "\n".join(lines)}
 
 def context_sabotage():
@@ -128,7 +112,6 @@ def context_sabotage():
         "SELECT COUNT(*) cnt FROM visits WHERE timestamp >= datetime('now','-30 days')").fetchone()["cnt"]
     sab_rate_sabs = db.execute(
         "SELECT COUNT(*) cnt FROM sabotages WHERE timestamp >= datetime('now','-30 days')").fetchone()["cnt"]
-
     lines = [f"Times she has interfered today: {today_sabs}"]
     if today_sabs > 1: lines.append("She is on a streak of interference today.")
     lines.append(f"All-time sabotage incidents: {total_sabs}")
@@ -136,19 +119,13 @@ def context_sabotage():
         lines.append(f"🚨 MILESTONE: {total_sabs}th sabotage incident.")
     if sab_rate_visits > 0:
         lines.append(f"Sabotage rate this month: {round(sab_rate_sabs/sab_rate_visits*100)}%")
-
     return {"context": "\n".join(lines)}
-
-# ── LR API commands ───────────────────────────────────────────────────────────
 
 async def get_robots():
     from pylitterbot import Account
     account = Account()
     try:
-        await account.connect(
-            username=os.environ["LITTER_ROBOT_EMAIL"],
-            password=os.environ["LITTER_ROBOT_PASSWORD"],
-            load_robots=True)
+        await account.connect(username=EMAIL, password=PASSWORD, load_robots=True)
         return [{"litterRobotId": str(r.id), "name": r.name,
                  "unitStatus": str(r.status.value) if r.status else None}
                 for r in account.robots]
@@ -159,10 +136,7 @@ async def get_activity(robot_id):
     from pylitterbot import Account
     account = Account()
     try:
-        await account.connect(
-            username=os.environ["LITTER_ROBOT_EMAIL"],
-            password=os.environ["LITTER_ROBOT_PASSWORD"],
-            load_robots=True)
+        await account.connect(username=EMAIL, password=PASSWORD, load_robots=True)
         robot = next((r for r in account.robots if str(r.id) == robot_id), None)
         if not robot: return []
         activity = await robot.get_activity()
@@ -180,11 +154,8 @@ async def get_activity(robot_id):
     finally:
         await account.disconnect()
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
-
     if cmd == "robots":
         print(json.dumps(asyncio.run(get_robots())))
     elif cmd == "activity":
