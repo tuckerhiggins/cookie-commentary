@@ -18,6 +18,7 @@ async function checkForNewActivity() {
     console.log(`🤖 Checking ${robot.name || 'Litter-Robot'}...`);
 
     const activities = await getRecentActivity(robot.litterRobotId);
+    console.log(`📋 Got ${activities?.length ?? 0} activities. Recent:`, JSON.stringify(activities?.slice(0,3)));
     if (!activities || activities.length === 0) return;
 
     for (const activity of activities) {
