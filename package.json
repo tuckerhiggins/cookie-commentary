@@ -2,10 +2,10 @@
   "name": "cookie-commentary",
   "version": "1.0.0",
   "description": "Funny AI commentary for Cookie's Litter Robot 4 usage",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
