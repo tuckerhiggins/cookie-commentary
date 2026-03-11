@@ -8,7 +8,7 @@ const { sendText } = require('./sms');
 const seenActivityIds = new Set();
 let initialized = false;
 
-const SABOTAGE_STATUSES = new Set(['CST', 'CSF', 'BR']);
+const SABOTAGE_STATUSES = new Set(['CST', 'CSF', 'CSI', 'BR']);
 
 async function checkForNewActivity() {
   try {
