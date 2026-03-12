@@ -130,7 +130,7 @@ ${context}
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 300, 'visit');
+  return callClaude(prompt, 400, 'visit');
 }
 
 async function generateSabotageCommentary(pendingCount = 1) {
@@ -155,7 +155,7 @@ ${context}
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no "Cookie" prefix, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 300, 'sabotage');
+  return callClaude(prompt, 400, 'sabotage');
 }
 
 async function generateDailyDigest(liveState = null) {
