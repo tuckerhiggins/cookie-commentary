@@ -130,7 +130,7 @@ ${context}
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 400, 'visit');
+  return callClaude(prompt, 1024, 'visit');
 }
 
 async function generateSabotageCommentary(pendingCount = 1) {
@@ -155,7 +155,7 @@ ${context}
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no "Cookie" prefix, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 400, 'sabotage');
+  return callClaude(prompt, 1024, 'sabotage');
 }
 
 async function generateDailyDigest(liveState = null) {
@@ -185,7 +185,7 @@ Morning dispatch to Tucker and Emma. Summarize what happened with Cookie overnig
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 400, 'digest');
+  return callClaude(prompt, 1024, 'digest');
 }
 
 async function generateDrawerCommentary(status) {
@@ -209,7 +209,7 @@ ${status === 'DFS'
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 180, 'drawer');
+  return callClaude(prompt, 1024, 'drawer');
 }
 
 async function generateMariaGratitude() {
@@ -224,7 +224,7 @@ Say something. Not effusively. You like Maria. Let that be known briefly.
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 150, 'maria');
+  return callClaude(prompt, 1024, 'maria');
 }
 
 async function generateHealthAlert(alertType, data) {
@@ -242,7 +242,7 @@ Speak plainly. Address Tucker and Emma directly. Suggest monitoring or calling t
 
 Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
-  return callClaude(prompt, 250, 'health');
+  return callClaude(prompt, 1024, 'health');
 }
 
 async function generateFaultAlert(statusCode, label) {
