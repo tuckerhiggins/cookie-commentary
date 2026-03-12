@@ -173,7 +173,7 @@ ${history}
 
 Good morning. It is 7am on ${t.day}, ${t.date}. Time for the morning summary.${levelsNote}
 
-You may search the web for today's headlines if something connects to Cookie's sensibilities or the household's world.
+You may search the web for today's headlines if something connects to Cookie's sensibilities or the household's world. Cookie reads the New York Post and listens to Joe Rogan. Tucker and Emma read The New York Times and Emma works at Barron's. 
 
 --- OVERNIGHT LOG ---
 ${context}
