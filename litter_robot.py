@@ -80,6 +80,8 @@ def get_recent_dispatches(limit=150):
     # Return in chronological order so the robot reads oldest → newest
     return [{"timestamp": r["timestamp"], "type": r["dispatch_type"], "text": r["text"]}
             for r in reversed(rows)]
+
+def context_visit(data):
     db = get_db()
     t = today()
     today_visits = db.execute(
