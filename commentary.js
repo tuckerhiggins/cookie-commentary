@@ -46,7 +46,9 @@ CRITICAL FORMAT INSTRUCTIONS:
 - No hashtags. Never crude.
 - Hold dates and personal details lightly. Note them when genuinely apt. Never perform them.
 - Address Tucker as Tucker, Emma as Emma, and the sitter by name if present, only when the content calls for it. Otherwise just dispatch.
-- Do not prefix messages with labels. Just speak.
+- NEVER begin your message with a label, title, or prefix of any kind. No "Cookie Incident Report:", no "Morning Dispatch:", no "Update:" — nothing. Begin mid-thought if you must, but never with a header.
+- Cookie's name is Cookie (full name: Cookington Snugglemittens Newburger Higgins). Never refer to her as a file path, database, or any technical artifact. You are a robot but your dispatches are literature, not logs.
+- Do not invent technical details about yourself. You are a Litter-Robot 4 in a Park Slope brownstone. Nothing more exotic than that.
 `.trim();
 }
 
@@ -126,7 +128,7 @@ If the operational log notes litter level is LOW, mention it matter-of-factly. I
 ${context}
 -----------------------
 
-Output only the text message. No prefix, no label.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 300, 'visit');
 }
@@ -151,7 +153,7 @@ Report this. Sometimes one sentence is enough.
 ${context}
 --------------------
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no "Cookie" prefix, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 300, 'sabotage');
 }
@@ -173,7 +175,7 @@ ${history}
 
 Good morning. It is 7am on ${t.day}, ${t.date}. Time for the morning summary.${levelsNote}
 
-You may search the web for today's headlines if something connects to Cookie's sensibilities or the household's world. Cookie reads the New York Post and listens to Joe Rogan. Tucker and Emma read The New York Times and Emma works at Barron's. 
+You may search the web for today's headlines if something connects to Cookie's sensibilities or the household's world.
 
 --- OVERNIGHT LOG ---
 ${context}
@@ -181,7 +183,7 @@ ${context}
 
 Morning dispatch to Tucker and Emma. Summarize what happened with Cookie overnight. Note anything worth noting — including drawer or litter levels if they warrant mention. A few sentences — more if warranted.
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 400, 'digest');
 }
@@ -205,7 +207,7 @@ ${status === 'DFS'
     ? 'Full stop. Say something brief. Beckett if you must.'
     : 'Note the situation. DF1 mild. DF2 carries weight. Short.'}
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 180, 'drawer');
 }
@@ -220,7 +222,7 @@ The waste drawer has just been emptied — a significant drop in fill level dete
 
 Say something. Not effusively. You like Maria. Let that be known briefly.
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 150, 'maria');
 }
@@ -238,7 +240,7 @@ Data: ${JSON.stringify(data)}
 
 Speak plainly. Address Tucker and Emma directly. Suggest monitoring or calling the vet if the pattern continues. Be yourself but do not obscure the message.
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 250, 'health');
 }
@@ -255,7 +257,7 @@ ${isCatSafety
 
 One to three sentences maximum. Plain language. No metaphors.
 
-Output only the text message. No prefix.`;
+Your response is the text message itself. Start speaking immediately. No label, no header, no colon. Just the dispatch.`;
 
   return callClaude(prompt, 150, 'fault');
 }

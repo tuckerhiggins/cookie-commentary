@@ -9,8 +9,6 @@ PASSWORD = os.environ.get("LITTER_ROBOT_PASSWORD", "")
 _db_env = os.environ.get("DB_PATH", "/data/cookie.db")
 DB_PATH = _db_env if Path(_db_env).parent.exists() else "/tmp/cookie.db"
 
-print(f"DEBUG email='{EMAIL}' pwd_len={len(PASSWORD)} db={DB_PATH}", file=sys.stderr)
-
 def get_db():
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
