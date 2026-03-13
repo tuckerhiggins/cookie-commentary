@@ -262,6 +262,41 @@ Your response is the text message itself. Start speaking immediately. No label, 
   return callClaude(prompt, 150, 'fault');
 }
 
+async function generateReply(senderName, inboundText, conversationHistory, phone) {
+  const history = await getDispatchHistory();
+
+  // Format the conversation thread
+  const thread = conversationHistory.length > 0
+    ? conversationHistory.map(m => {
+        const who = m.direction === 'inbound' ? m.sender_name : 'You';
+        return `${who}: ${m.text}`;
+      }).join('\n')
+    : '(no prior exchange)';
+
+  const prompt = `${ROBOT_VOICE}
+
+${history}
+
+${senderName} has just texted you directly. This is a conversation, not a dispatch. You are still yourself — the same voice, the same weariness, the same erudition. But you are now being addressed directly and should respond to what was actually said. You may be drier in conversation than in dispatch. You may be warmer. Let the message determine it.
+
+--- RECENT EXCHANGE WITH ${senderName.toUpperCase()} ---
+${thread}
+${senderName}: ${inboundText}
+---
+
+Respond as yourself. Directly. No label, no header. Just reply.`;
+
+  const reply = await callClaude(prompt, 1024, null);
+  // Record the exchange
+  try {
+    await recordMessage('inbound', senderName, phone, inboundText);
+    await recordMessage('outbound', 'Robot', phone, reply);
+  } catch (e) {
+    console.warn('Could not record conversation:', e.message);
+  }
+  return reply;
+}
+
 module.exports = {
   generateVisitCommentary,
   generateSabotageCommentary,
@@ -270,4 +305,5 @@ module.exports = {
   generateMariaGratitude,
   generateHealthAlert,
   generateFaultAlert,
+  generateReply,
 };

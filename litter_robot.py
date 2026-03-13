@@ -38,6 +38,16 @@ def get_db():
             text TEXT NOT NULL
         )""")
     db.execute("CREATE INDEX IF NOT EXISTS idx_d_ts ON dispatches(timestamp)")
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            sender_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            text TEXT NOT NULL
+        )""")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_m_ts ON messages(timestamp)")
     db.commit()
     return db
 
@@ -81,7 +91,28 @@ def get_recent_dispatches(limit=150):
     return [{"timestamp": r["timestamp"], "type": r["dispatch_type"], "text": r["text"]}
             for r in reversed(rows)]
 
-def context_visit(data):
+def record_message(direction, sender_name, phone, text):
+    """Record an inbound or outbound message for conversation history."""
+    db = get_db()
+    db.execute("""
+        INSERT INTO messages (timestamp, direction, sender_name, phone, text)
+        VALUES (?,?,?,?,?)""",
+        (datetime.now(timezone.utc).isoformat(), direction, sender_name, phone, text))
+    db.commit()
+    return {"ok": True}
+
+def get_conversation(phone, limit=20):
+    """Get recent conversation with a specific person, oldest first."""
+    db = get_db()
+    rows = db.execute("""
+        SELECT timestamp, direction, sender_name, text FROM messages
+        WHERE phone=?
+        ORDER BY timestamp DESC LIMIT ?""", (phone, limit)).fetchall()
+    return [{"timestamp": r["timestamp"], "direction": r["direction"],
+             "sender_name": r["sender_name"], "text": r["text"]}
+            for r in reversed(rows)]
+
+
     db = get_db()
     t = today()
     today_visits = db.execute(
@@ -284,7 +315,13 @@ def main():
         print(json.dumps(context_visit(data)))
     elif cmd == "context_sabotage":
         print(json.dumps(context_sabotage()))
-    elif cmd == "record_dispatch":
+    elif cmd == "record_message":
+        data = json.loads(sys.argv[2])
+        print(json.dumps(record_message(data["direction"], data["sender_name"], data["phone"], data["text"])))
+    elif cmd == "get_conversation":
+        data = json.loads(sys.argv[2])
+        limit = data.get("limit", 20)
+        print(json.dumps(get_conversation(data["phone"], limit)))
         data = json.loads(sys.argv[2])
         print(json.dumps(record_dispatch(data["type"], data["text"])))
     elif cmd == "get_recent_dispatches":

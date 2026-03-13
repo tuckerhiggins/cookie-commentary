@@ -12,6 +12,7 @@ const {
   generateFaultAlert,
 } = require('./commentary');
 const { sendText, sendToTucker, sendToBoth } = require('./sms');
+const { startServer } = require('./server');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,7 @@ async function runTestMode() {
 
 async function main() {
   console.log('🚀 Cookie Commentary Service starting...');
+  startServer();
   if (process.env.TEST_MODE) {
     await runTestMode();
     return;
@@ -299,7 +301,7 @@ async function main() {
   await checkForNewActivity();
   // Poll every 3 minutes
   cron.schedule('*/3 * * * *', checkForNewActivity);
-  // Daily digest at 7am NYC time — requires TZ=America/New_York in Railway env vars
+  // Daily digest at 7am NYC time
   cron.schedule('0 7 * * *', sendDailyDigest, { timezone: 'America/New_York' });
 }
 
